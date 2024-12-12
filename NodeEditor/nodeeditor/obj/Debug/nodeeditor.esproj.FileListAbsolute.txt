@@ -1,0 +1,2 @@
+D:\Autodesk Research\12122024\NodeEditor\NodeEditor\obj\Debug\nodeeditor.esproj.CoreCompileInputs.cache
+D:\Autodesk Research\Working\Node_Editor-Type\NodeEditor\NodeEditor\obj\Debug\nodeeditor.esproj.CoreCompileInputs.cache
