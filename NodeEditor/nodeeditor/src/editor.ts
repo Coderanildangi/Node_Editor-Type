@@ -3,10 +3,15 @@ import { NodeEditor, GetSchemes, ClassicPreset } from "rete";
 import { AreaPlugin, AreaExtensions } from "rete-area-plugin";
 import { ConnectionPlugin, Presets as ConnectionPresets } from "rete-connection-plugin";
 import { ReactPlugin, Presets, ReactArea2D } from "rete-react-plugin";
+import {
+   AutoArrangePlugin,
+   Presets as ArrangePresets,
+   ArrangeAppliers
+} from "rete-auto-arrange-plugin";
 
 // Define Schemes and AreaExtra types
 type Schemes = GetSchemes<
-   ClassicPreset.Node,
+   ClassicPreset.Node & { width: number; height: number; },
    ClassicPreset.Connection<ClassicPreset.Node, ClassicPreset.Node>
 >;
 type AreaExtra = ReactArea2D<Schemes>;
@@ -75,11 +80,13 @@ export async function createEditor(container: HTMLElement) {
    const area = new AreaPlugin<Schemes, AreaExtra>(container);
    const connection = new ConnectionPlugin<Schemes, AreaExtra>();
    const render = new ReactPlugin<Schemes, AreaExtra>({ createRoot });
+   const arrange = new AutoArrangePlugin<Schemes>();
 
    // Add plugins to the editor
    editor.use(area);
    area.use(connection);
    area.use(render);
+   area.use(arrange);
 
    // Add presets for rendering and connections
    render.addPreset(Presets.classic.setup());
@@ -91,11 +98,25 @@ export async function createEditor(container: HTMLElement) {
    });
    AreaExtensions.simpleNodesOrder(area);
 
+   const applier = new ArrangeAppliers.TransitionApplier<Schemes, never>({
+      duration: 500,
+      timingFunction: (t) => t,
+      async onTick() {
+         await AreaExtensions.zoomAt(area, editor.getNodes());
+      }
+   });
+
+   arrange.addPreset(ArrangePresets.classic.setup());
+
    // Function to create a node
    async function createNode(label: string, x: number, y: number) {
       const node = new ClassicPreset.Node(label);
       node.addOutput("output", new ClassicPreset.Output(socket));
       node.addInput("input", new ClassicPreset.Input(socket));
+
+      // Add width and height properties to the node
+      (node as any).width = 200;
+      (node as any).height = 100;
 
       await editor.addNode(node);
       await area.translate(node.id, { x: x, y: y });
@@ -103,7 +124,7 @@ export async function createEditor(container: HTMLElement) {
    }
 
    // Function to recursively add nodes based on JSON data
-   async function addNodesFromJSON(data: { [x: string]: any }, parentNode = null, posX = 0, posY = 0) {
+   async function addNodesFromJSON(data: { [x: string]: any }, parentNode: ClassicPreset.Node | null = null, posX = 0, posY = 0) {
       for (const key in data) {
          const childData = data[key];
          const node = await createNode(key, posX, posY);
@@ -143,6 +164,9 @@ export async function createEditor(container: HTMLElement) {
 
    // Add nodes based on JSON data
    await addNodesFromJSON(jsonData);
+
+   // Enable auto-arrange
+   await arrange.layout({ applier });
 
    // Zoom to fit nodes
    setTimeout(() => {
