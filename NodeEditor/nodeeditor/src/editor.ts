@@ -13,91 +13,58 @@ type AreaExtra = ReactArea2D<Schemes>;
 
 // Define JSON data
 const jsonData = {
-   "InternalCombustionEngines": {
-      "Classification": {
-         "ByIgnitionMethod": {
-            "SparkIgnition": {
-               "Description": "Engines that use a spark plug to ignite the air-fuel mixture.",
-               "Examples": ["Petrol Engines", "Gas Engines"]
-            },
-            "CompressionIgnition": {
-               "Description": "Engines that use compression to raise the temperature of air to ignite the fuel.",
-               "Examples": ["Diesel Engines"]
-            }
+   "Automobile": {
+      "Input": {
+         "Energy Source": {
+            "Fuel": ["Gasoline", "Diesel"],
+            "Battery": ["Electric Vehicle"],
+            "Hybrid Sources": []
          },
-         "ByCylinderArrangement": {
-            "Inline": {
-               "Description": "Cylinders arranged in a single line.",
-               "Variants": ["Inline-3", "Inline-4", "Inline-6"]
-            },
-            "V-Type": {
-               "Description": "Cylinders arranged in two banks forming a 'V'.",
-               "Variants": ["V6", "V8", "V12"]
-            },
-            "Flat": {
-               "Description": "Cylinders arranged horizontally opposing each other.",
-               "Variants": ["Flat-4", "Flat-6"]
-            },
-            "Radial": {
-               "Description": "Cylinders arranged in a circular configuration.",
-               "Variants": ["5-Cylinder Radial", "9-Cylinder Radial"]
-            }
+         "Controls": {
+            "Steering": {},
+            "Accelerator": {},
+            "Brake": {},
+            "Gear System": {}
          },
-         "ByFuelType": {
-            "Petrol": {
-               "Description": "Engines that use gasoline as fuel.",
-               "Characteristics": ["High RPM", "Lightweight"]
-            },
-            "Diesel": {
-               "Description": "Engines that use diesel as fuel.",
-               "Characteristics": ["High Torque", "Fuel Efficient"]
-            },
-            "Gas": {
-               "Description": "Engines that use natural gas or LPG.",
-               "Characteristics": ["Clean Emissions", "Lower Energy Density"]
-            },
-            "Multi-Fuel": {
-               "Description": "Engines that can run on multiple fuel types.",
-               "Examples": ["Petrol and LPG", "Diesel and Biodiesel"]
-            }
-         },
-         "ByCoolingMethod": {
-            "AirCooled": {
-               "Description": "Engines cooled by air flowing over fins.",
-               "Usage": ["Motorcycles", "Small Aircraft"]
-            },
-            "WaterCooled": {
-               "Description": "Engines cooled using a liquid coolant.",
-               "Usage": ["Cars", "Trucks"]
-            }
-         },
-         "ByNumberOfStrokes": {
-            "TwoStroke": {
-               "Description": "Engines that complete a power cycle in two strokes.",
-               "Characteristics": ["Simple Design", "High Power-to-Weight Ratio"]
-            },
-            "FourStroke": {
-               "Description": "Engines that complete a power cycle in four strokes.",
-               "Characteristics": ["Efficient", "Widely Used"]
-            }
+         "Environment Interaction": {
+            "Air Intake": {},
+            "Road Feedback": {},
+            "Sensors": ["Cameras", "Radar"]
          }
       },
-      "Applications": {
-         "Automotive": {
-            "Examples": ["Passenger Cars", "Trucks", "Motorcycles"]
+      "Process": {
+         "Powertrain": {
+            "Engine": {},
+            "Transmission": {},
+            "Drivetrain": {}
          },
-         "Aviation": {
-            "Examples": ["Light Aircraft Engines", "Helicopter Engines"]
+         "Control Systems": {
+            "Electronic Control Units": {},
+            "Stability Control": {},
+            "Driver Assistance Systems": {}
          },
-         "Marine": {
-            "Examples": ["Outboard Motors", "Ship Engines"]
+         "Auxiliary Systems": {
+            "Climate Control": {},
+            "Infotainment": {},
+            "Lighting and Indicators": {}
+         }
+      },
+      "Output": {
+         "Motion": {
+            "Forward Motion": {},
+            "Reverse Motion": {},
+            "Turning": {}
          },
-         "Industrial": {
-            "Examples": ["Generators", "Pumps", "Construction Equipment"]
+         "Communication": {
+            "External": ["Horn", "Indicators", "Brake Lights"],
+            "Internal": ["Displays", "Alerts"]
+         },
+         "Environmental Impact": {
+            "Emissions": ["Exhaust Gases", "Noise"],
+            "Energy Loss": ["Heat", "Friction"]
          }
       }
    }
-
 };
 
 // Function to create editor
@@ -136,7 +103,7 @@ export async function createEditor(container: HTMLElement) {
    }
 
    // Function to recursively add nodes based on JSON data
-   async function addNodesFromJSON(data: { [x: string]: any; Car?: { "Engine Type": string[]; "Transmission Type": string[]; }; }, parentNode = null, posX = 0, posY = 0) {
+   async function addNodesFromJSON(data: { [x: string]: any }, parentNode = null, posX = 0, posY = 0) {
       for (const key in data) {
          const childData = data[key];
          const node = await createNode(key, posX, posY);
@@ -147,15 +114,27 @@ export async function createEditor(container: HTMLElement) {
          }
 
          if (Array.isArray(childData)) {
-            let childY = posY + 300;
-            for (const value of childData) {
-               const childNode = await createNode(value, posX + 200, childY);
+            const count = childData.length;
+            const totalHeight = (count - 1) * 400;
+            let childY = posY - totalHeight / 2;
+
+            for (let i = 0; i < count; i++) {
+               const childNode = await createNode(childData[i], posX + 500, childY);
                const connection = new ClassicPreset.Connection(node, "output", childNode, "input");
                await editor.addConnection(connection);
-               childY += 300;
+               childY += 400;
             }
          } else if (typeof childData === "object" && childData !== null) {
-            await addNodesFromJSON(childData, node, posX + 500, posY + 500);
+            const childKeys = Object.keys(childData);
+            const count = childKeys.length;
+            const totalHeight = (count - 1) * 400;
+            let childY = posY - totalHeight / 2;
+
+            for (let i = 0; i < count; i++) {
+               const childKey = childKeys[i];
+               await addNodesFromJSON({ [childKey]: childData[childKey] }, node, posX + 500, childY);
+               childY += 400;
+            }
          }
 
          posY += 300; // Adjust vertical spacing between nodes

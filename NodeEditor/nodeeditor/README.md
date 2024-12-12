@@ -1,50 +1,141 @@
-# React + TypeScript + Vite
+﻿# Rete.js Dynamic Node Editor
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a dynamic Node Editor built using [Rete.js](https://rete.js.org/) along with its plugins. The editor is capable of rendering nodes based on hierarchical JSON data, dynamically adding/removing nodes, and exporting the current node structure back to JSON.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Dynamic Node Creation:** Nodes are created dynamically from a nested JSON structure.
+- **Hierarchical Node Placement:** Nodes are positioned in a visually organized hierarchical structure.
+  - Child nodes are distributed evenly above and below their parent, considering the number of children (even/odd).
+- **Dynamic Node Manipulation:**
+  - Add new nodes interactively.
+  - Remove nodes dynamically.
+- **Export to JSON:** Export the current node configuration to JSON format.
+- **Rete.js Plugins:**
+  - `rete-area-plugin` for managing the canvas and interactions.
+  - `rete-connection-plugin` for handling connections between nodes.
+  - `rete-react-plugin` for React-based rendering of nodes.
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+### Prerequisites
 
-- Configure the top-level `parserOptions` property like this:
+- **Node.js** (v14 or later)
+- Package Manager: `npm` or `yarn`
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+### Installation
+
+1. Clone this repository:
+   ```bash
+   git clone <repository-url>
+   ```
+2. Navigate to the project directory:
+   ```bash
+   cd rete-dynamic-node-editor
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+### Usage
+
+1. Start the development server:
+   ```bash
+   npm start
+   # or
+   yarn start
+   ```
+2. Open the application in your browser at `http://localhost:3000`.
+
+## Core Functionality
+
+### Dynamic Node Creation
+
+Nodes are created dynamically by parsing hierarchical JSON data. Child nodes are arranged relative to their parent nodes:
+- **Even Children:** Half are placed above, and half below the parent node.
+- **Odd Children:** The middle child is aligned with the parent, while others are evenly distributed above and below.
+
+### Dynamic Node Manipulation
+
+- **Add Nodes:** Interactively add nodes by calling the `createNode` function.
+- **Remove Nodes:** Remove nodes dynamically, ensuring proper connection handling.
+
+### Export to JSON
+
+The current node structure can be exported to JSON using the `editor.toJSON()` method, enabling easy integration and persistence of the node graph.
+
+### Example JSON Input
+
+The editor processes JSON data like the following to generate nodes:
+
+```json
+{
+   "InternalCombustionEngines": {
+      "Classification": {
+         "ByIgnitionMethod": {
+            "SparkIgnition": {
+               "Description": "Engines that use a spark plug to ignite the air-fuel mixture.",
+               "Examples": ["Petrol Engines", "Gas Engines"]
+            },
+            "CompressionIgnition": {
+               "Description": "Engines that use compression to raise the temperature of air to ignite the fuel.",
+               "Examples": ["Diesel Engines"]
+            }
+         }
+      }
+   }
+}
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+### Export Example
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+The following is an example of JSON output for a generated node graph:
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```json
+{
+   "nodes": {
+      "1": {
+         "id": 1,
+         "name": "InternalCombustionEngines",
+         "inputs": [],
+         "outputs": ["Classification"]
+      },
+      "2": {
+         "id": 2,
+         "name": "Classification",
+         "inputs": ["InternalCombustionEngines"],
+         "outputs": ["ByIgnitionMethod"]
+      }
+   }
+}
 ```
+
+## Project Structure
+
+- **`src/index.ts`**: Entry point of the application.
+- **`src/editor.ts`**: Core implementation of the Rete.js Node Editor.
+- **`src/jsonData.ts`**: Contains the example hierarchical JSON data.
+
+## Future Enhancements
+
+- Improved UI for dynamic node creation and deletion.
+- Support for advanced node configuration and validation.
+- Enhanced exporting features to save/load complete editor states.
+
+## Dependencies
+
+- [Rete.js](https://rete.js.org/)
+- [Rete-area-plugin](https://rete.js.org/#/plugins/area)
+- [Rete-connection-plugin](https://rete.js.org/#/plugins/connection)
+- [Rete-react-plugin](https://rete.js.org/#/plugins/react)
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+---
+
+**Happy Coding!** 🚀
