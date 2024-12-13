@@ -1,179 +1,199 @@
 import { createRoot } from "react-dom/client";
 import { NodeEditor, GetSchemes, ClassicPreset } from "rete";
 import { AreaPlugin, AreaExtensions } from "rete-area-plugin";
-import { ConnectionPlugin, Presets as ConnectionPresets } from "rete-connection-plugin";
+import {
+   ConnectionPlugin,
+   Presets as ConnectionPresets
+} from "rete-connection-plugin";
 import { ReactPlugin, Presets, ReactArea2D } from "rete-react-plugin";
 import {
    AutoArrangePlugin,
    Presets as ArrangePresets,
    ArrangeAppliers
 } from "rete-auto-arrange-plugin";
+import {
+   ContextMenuPlugin,
+   Presets as ContextMenuPresets,
+   ContextMenuExtra
+} from "rete-context-menu-plugin";
+import { easeInOut } from "popmotion";
+import { insertableNodes } from "./insert-node";
 
-// Define Schemes and AreaExtra types
-type Schemes = GetSchemes<
-   ClassicPreset.Node & { width: number; height: number; },
-   ClassicPreset.Connection<ClassicPreset.Node, ClassicPreset.Node>
->;
-type AreaExtra = ReactArea2D<Schemes>;
+const socket = new ClassicPreset.Socket("socket");
 
-// Define JSON data
-const jsonData = {
-   "Automobile": {
-      "Input": {
-         "Energy Source": {
-            "Fuel": ["Gasoline", "Diesel"],
-            "Battery": ["Electric Vehicle"],
-            "Hybrid Sources": []
-         },
-         "Controls": {
-            "Steering": {},
-            "Accelerator": {},
-            "Brake": {},
-            "Gear System": {}
-         },
-         "Environment Interaction": {
-            "Air Intake": {},
-            "Road Feedback": {},
-            "Sensors": ["Cameras", "Radar"]
-         }
-      },
-      "Process": {
-         "Powertrain": {
-            "Engine": {},
-            "Transmission": {},
-            "Drivetrain": {}
-         },
-         "Control Systems": {
-            "Electronic Control Units": {},
-            "Stability Control": {},
-            "Driver Assistance Systems": {}
-         },
-         "Auxiliary Systems": {
-            "Climate Control": {},
-            "Infotainment": {},
-            "Lighting and Indicators": {}
-         }
-      },
-      "Output": {
-         "Motion": {
-            "Forward Motion": {},
-            "Reverse Motion": {},
-            "Turning": {}
-         },
-         "Communication": {
-            "External": ["Horn", "Indicators", "Brake Lights"],
-            "Internal": ["Displays", "Alerts"]
-         },
-         "Environmental Impact": {
-            "Emissions": ["Exhaust Gases", "Noise"],
-            "Energy Loss": ["Heat", "Friction"]
-         }
-      }
+class Node extends ClassicPreset.Node {
+   width = 200;
+   height = 100;
+
+   constructor(label = "Dynamic Node") {
+      super(label);
+      this.addInput("port", new ClassicPreset.Input(socket));
+      this.addOutput("port", new ClassicPreset.Output(socket));
    }
-};
+}
 
-// Function to create editor
+class Connection<N extends Node> extends ClassicPreset.Connection<N, N> { }
+
+type Schemes = GetSchemes<Node, Connection<Node>>;
+type AreaExtra = ReactArea2D<Schemes> | ContextMenuExtra;
+
+
 export async function createEditor(container: HTMLElement) {
-   const socket = new ClassicPreset.Socket("socket");
-
    const editor = new NodeEditor<Schemes>();
    const area = new AreaPlugin<Schemes, AreaExtra>(container);
    const connection = new ConnectionPlugin<Schemes, AreaExtra>();
    const render = new ReactPlugin<Schemes, AreaExtra>({ createRoot });
    const arrange = new AutoArrangePlugin<Schemes>();
+   const contextMenu = new ContextMenuPlugin<Schemes>({
+      items: ContextMenuPresets.classic.setup([["Node", () => new Node()]])
+   });
 
-   // Add plugins to the editor
+   AreaExtensions.selectableNodes(area, AreaExtensions.selector(), {
+      accumulating: AreaExtensions.accumulateOnCtrl()
+   });
+
+   render.addPreset(Presets.classic.setup());
+   render.addPreset(Presets.contextMenu.setup());
+
+   connection.addPreset(ConnectionPresets.classic.setup());
+
+   arrange.addPreset(ArrangePresets.classic.setup());
+
    editor.use(area);
    area.use(connection);
    area.use(render);
    area.use(arrange);
+   area.use(contextMenu);
 
-   // Add presets for rendering and connections
-   render.addPreset(Presets.classic.setup());
-   connection.addPreset(ConnectionPresets.classic.setup());
-
-   // Enable node selection and ordering
-   AreaExtensions.selectableNodes(area, AreaExtensions.selector(), {
-      accumulating: AreaExtensions.accumulateOnCtrl(),
+   const animatedApplier = new ArrangeAppliers.TransitionApplier<Schemes, never>({
+      duration: 500,
+      timingFunction: easeInOut
    });
+
    AreaExtensions.simpleNodesOrder(area);
 
-   const applier = new ArrangeAppliers.TransitionApplier<Schemes, never>({
-      duration: 500,
-      timingFunction: (t) => t,
-      async onTick() {
-         await AreaExtensions.zoomAt(area, editor.getNodes());
+   insertableNodes(area, {
+      async createConnections(node, connection) {
+         const sourceNode = editor.getNode(connection.source);
+         if (!sourceNode) throw new Error(`Node with id ${connection.source} not found`);
+         await editor.addConnection(
+            new Connection(
+               sourceNode,
+               connection.sourceOutput,
+               node,
+               "port"
+            )
+         );
+         const targetNode = editor.getNode(connection.target);
+         if (!targetNode) throw new Error(`Node with id ${connection.target} not found`);
+         await editor.addConnection(
+            new Connection(
+               node,
+               "port",
+               targetNode,
+               connection.targetInput
+            )
+         );
+         arrange.layout({
+            applier: animatedApplier
+         });
       }
    });
 
-   arrange.addPreset(ArrangePresets.classic.setup());
+   // Add initial nodes from JSON data
+   const jsonData = {
+      Automobile: {
+         Input: {
+            "Energy Source": {
+               Fuel: ["Gasoline", "Diesel"],
+               Battery: ["Electric Vehicle"],
+               "Hybrid Sources": []
+            },
+            Controls: {
+               Steering: {},
+               Accelerator: {},
+               Brake: {},
+               "Gear System": {}
+            },
+            "Environment Interaction": {
+               "Air Intake": {},
+               "Road Feedback": {},
+               Sensors: ["Cameras", "Radar"]
+            }
+         },
+         Process: {
+            Powertrain: {
+               Engine: {},
+               Transmission: {},
+               Drivetrain: {}
+            },
+            "Control Systems": {
+               "Electronic Control Units": {},
+               "Stability Control": {},
+               "Driver Assistance Systems": {}
+            },
+            "Auxiliary Systems": {
+               "Climate Control": {},
+               Infotainment: {},
+               "Lighting and Indicators": {}
+            }
+         },
+         Output: {
+            Motion: {
+               "Forward Motion": {},
+               "Reverse Motion": {},
+               Turning: {}
+            },
+            Communication: {
+               External: ["Horn", "Indicators", "Brake Lights"],
+               Internal: ["Displays", "Alerts"]
+            },
+            "Environmental Impact": {
+               Emissions: ["Exhaust Gases", "Noise"],
+               "Energy Loss": ["Heat", "Friction"]
+            }
+         }
+      }
+   };
 
-   // Function to create a node
-   async function createNode(label: string, x: number, y: number) {
-      const node = new ClassicPreset.Node(label);
-      node.addOutput("output", new ClassicPreset.Output(socket));
-      node.addInput("input", new ClassicPreset.Input(socket));
-
-      // Add width and height properties to the node
-      (node as any).width = 200;
-      (node as any).height = 100;
-
-      await editor.addNode(node);
-      await area.translate(node.id, { x: x, y: y });
-      return node;
-   }
-
-   // Function to recursively add nodes based on JSON data
-   async function addNodesFromJSON(data: { [x: string]: any }, parentNode: ClassicPreset.Node | null = null, posX = 0, posY = 0) {
+   async function addNodesFromJSON(data: { [x: string]: any }, parentNode = null, posX = 0, posY = 0) {
       for (const key in data) {
          const childData = data[key];
-         const node = await createNode(key, posX, posY);
+         const node = new Node(key);
+         await editor.addNode(node);
+         await area.translate(node.id, { x: posX, y: posY });
 
          if (parentNode) {
-            const connection = new ClassicPreset.Connection(parentNode as ClassicPreset.Node, "output", node as ClassicPreset.Node, "input");
+            const connection = new Connection(parentNode, "port", node, "port");
             await editor.addConnection(connection);
          }
 
          if (Array.isArray(childData)) {
-            const count = childData.length;
-            const totalHeight = (count - 1) * 400;
-            let childY = posY - totalHeight / 2;
-
-            for (let i = 0; i < count; i++) {
-               const childNode = await createNode(childData[i], posX + 500, childY);
-               const connection = new ClassicPreset.Connection(node, "output", childNode, "input");
-               await editor.addConnection(connection);
-               childY += 400;
+            let childY = posY - (childData.length - 1) * 200 / 2;
+            for (const item of childData) {
+               const childNode = new Node(item);
+               await editor.addNode(childNode);
+               await area.translate(childNode.id, { x: posX + 400, y: childY });
+               await editor.addConnection(new Connection(node, "port", childNode, "port"));
+               childY += 200;
             }
          } else if (typeof childData === "object" && childData !== null) {
-            const childKeys = Object.keys(childData);
-            const count = childKeys.length;
-            const totalHeight = (count - 1) * 400;
-            let childY = posY - totalHeight / 2;
-
-            for (let i = 0; i < count; i++) {
-               const childKey = childKeys[i];
-               await addNodesFromJSON({ [childKey]: childData[childKey] }, node, posX + 500, childY);
-               childY += 400;
+            let childY = posY - (Object.keys(childData).length - 1) * 200 / 2;
+            for (const subKey in childData) {
+               await addNodesFromJSON({ [subKey]: childData[subKey] }, node, posX + 400, childY);
+               childY += 200;
             }
          }
-
-         posY += 300; // Adjust vertical spacing between nodes
+         posY += 300;
       }
    }
 
-   // Add nodes based on JSON data
    await addNodesFromJSON(jsonData);
 
-   // Enable auto-arrange
-   await arrange.layout({ applier });
-
-   // Zoom to fit nodes
-   setTimeout(() => {
-      AreaExtensions.zoomAt(area, editor.getNodes());
-   }, 10);
+   await arrange.layout({ applier: animatedApplier });
+   AreaExtensions.zoomAt(area, editor.getNodes());
 
    return {
-      destroy: () => area.destroy(),
+      destroy: () => area.destroy()
    };
 }
