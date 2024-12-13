@@ -1,0 +1,82 @@
+{
+   "Company": {
+      "Executive": {
+         "CEO": {
+            "Responsibilities": [ "Vision and Strategy", "Overall Leadership", "Investor Relations" ],
+            "DirectReports": {
+               "COO": {
+                  "Responsibilities": [ "Operational Strategy", "Daily Operations", "Cross-Department Coordination" ],
+                  "DirectReports": {
+                     "VP of Operations": {
+                        "Responsibilities": [ "Day-to-day Operations", "Operational Efficiency", "Team Management" ]
+                     },
+                     "VP of Customer Service": {
+                        "Responsibilities": [ "Customer Satisfaction", "Service Improvements", "Client Relationships" ]
+                     }
+                  }
+               },
+               "CFO": {
+                  "Responsibilities": [ "Financial Strategy", "Budgeting", "Investor Relations" ],
+                  "DirectReports": {
+                     "Controller": {
+                        "Responsibilities": [ "Financial Reporting", "Accounting", "Compliance" ]
+                     },
+                     "Treasurer": {
+                        "Responsibilities": [ "Cash Flow Management", "Investments", "Capital Raising" ]
+                     },
+                     "Accountant": {
+                        "Responsibilities": [ "Account Reconciliation", "Ledger Maintenance", "Financial Reporting" ]
+                     }
+                  }
+               },
+               "CTO": {
+                  "Responsibilities": [ "Technology Strategy", "Product Development", "Research and Development" ],
+                  "DirectReports": {
+                     "VP of Engineering": {
+                        "Responsibilities": [ "Software Development", "Technical Team Leadership", "Product Roadmap" ]
+                     },
+                     "VP of IT": {
+                        "Responsibilities": [ "IT Infrastructure", "Systems Security", "Technology Integration" ]
+                     },
+                     "Engineering": {
+                        "Responsibilities": [ "Design and Development", "Product Prototyping", "Engineering Process Management" ]
+                     }
+                  }
+               }
+            }
+         }
+      },
+      "Departments": {
+         "Operations": {
+            "Manager": {
+               "Responsibilities": [ "Team Management", "Process Optimization", "Daily Oversight" ],
+               "DirectReports": {
+                  "Operations Supervisor": {
+                     "Responsibilities": [ "Team Supervision", "Daily Workflows", "Performance Tracking" ]
+                  }
+               }
+            }
+         },
+         "Finance": {
+            "Manager": {
+               "Responsibilities": [ "Financial Planning", "Expense Management", "Reporting" ],
+               "DirectReports": {
+                  "Financial Analyst": {
+                     "Responsibilities": [ "Budgeting", "Financial Reporting", "Data Analysis" ]
+                  }
+               }
+            }
+         },
+         "Technology": {
+            "Manager": {
+               "Responsibilities": [ "Product Development", "Engineering Projects", "Innovation" ],
+               "DirectReports": {
+                  "Software Engineer": {
+                     "Responsibilities": [ "Software Development", "Coding", "Testing" ]
+                  }
+               }
+            }
+         }
+      }
+   }
+}

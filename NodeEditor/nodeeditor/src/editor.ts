@@ -18,6 +18,9 @@ import {
 } from "rete-context-menu-plugin";
 import { easeInOut } from "popmotion";
 import { insertableNodes } from "./insert-node";
+import jsonData from "./input/data.json"; 
+
+
 
 const socket = new ClassicPreset.Socket("socket");
 
@@ -30,6 +33,11 @@ class Node extends ClassicPreset.Node {
       this.addInput("port", new ClassicPreset.Input(socket));
       this.addOutput("port", new ClassicPreset.Output(socket));
    }
+
+   // Cloning dynamic node
+   //clone() {
+   //   return new Node()
+   //}
 }
 
 class Connection<N extends Node> extends ClassicPreset.Connection<N, N> { }
@@ -100,63 +108,7 @@ export async function createEditor(container: HTMLElement) {
       }
    });
 
-   // Add initial nodes from JSON data
-   const jsonData = {
-      Automobile: {
-         Input: {
-            "Energy Source": {
-               Fuel: ["Gasoline", "Diesel"],
-               Battery: ["Electric Vehicle"],
-               "Hybrid Sources": []
-            },
-            Controls: {
-               Steering: {},
-               Accelerator: {},
-               Brake: {},
-               "Gear System": {}
-            },
-            "Environment Interaction": {
-               "Air Intake": {},
-               "Road Feedback": {},
-               Sensors: ["Cameras", "Radar"]
-            }
-         },
-         Process: {
-            Powertrain: {
-               Engine: {},
-               Transmission: {},
-               Drivetrain: {}
-            },
-            "Control Systems": {
-               "Electronic Control Units": {},
-               "Stability Control": {},
-               "Driver Assistance Systems": {}
-            },
-            "Auxiliary Systems": {
-               "Climate Control": {},
-               Infotainment: {},
-               "Lighting and Indicators": {}
-            }
-         },
-         Output: {
-            Motion: {
-               "Forward Motion": {},
-               "Reverse Motion": {},
-               Turning: {}
-            },
-            Communication: {
-               External: ["Horn", "Indicators", "Brake Lights"],
-               Internal: ["Displays", "Alerts"]
-            },
-            "Environmental Impact": {
-               Emissions: ["Exhaust Gases", "Noise"],
-               "Energy Loss": ["Heat", "Friction"]
-            }
-         }
-      }
-   };
-
-   async function addNodesFromJSON(data: { [x: string]: any }, parentNode = null, posX = 0, posY = 0) {
+   async function addNodesFromJSON(data: { [x: string]: any }, parentNode: Node | null = null, posX = 0, posY = 0) {
       for (const key in data) {
          const childData = data[key];
          const node = new Node(key);
