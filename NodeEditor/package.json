@@ -8,6 +8,8 @@
     "rete-auto-arrange-plugin": "^2.0.2",
     "rete-connection-plugin": "^2.0.5",
     "rete-context-menu-plugin": "^2.0.4",
+    "rete-history-plugin": "^2.0.2",
+    "rete-minimap-plugin": "^2.0.3",
     "rete-react-plugin": "^2.0.7",
     "rete-render-utils": "^2.0.3",
     "styled-components": "^6.1.13"

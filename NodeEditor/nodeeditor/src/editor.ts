@@ -16,6 +16,12 @@ import {
    Presets as ContextMenuPresets,
    ContextMenuExtra
 } from "rete-context-menu-plugin";
+import {
+   HistoryExtensions,
+   HistoryPlugin,
+   Presets as HistoryPresets
+} from "rete-history-plugin";
+import { MinimapExtra, MinimapPlugin } from "rete-minimap-plugin";
 import { easeInOut } from "popmotion";
 import { insertableNodes } from "./insert-node";
 import jsonData from "./input/data.json"; 
@@ -43,7 +49,7 @@ class Node extends ClassicPreset.Node {
 class Connection<N extends Node> extends ClassicPreset.Connection<N, N> { }
 
 type Schemes = GetSchemes<Node, Connection<Node>>;
-type AreaExtra = ReactArea2D<Schemes> | ContextMenuExtra;
+type AreaExtra = ReactArea2D<Schemes> | ContextMenuExtra | MinimapExtra;
 
 
 export async function createEditor(container: HTMLElement) {
@@ -56,12 +62,23 @@ export async function createEditor(container: HTMLElement) {
       items: ContextMenuPresets.classic.setup([["Node", () => new Node()]])
    });
 
+   const minimap = new MinimapPlugin<Schemes>({
+      boundViewport: true
+   });
+
+   const history = new HistoryPlugin<Schemes>();
+
    AreaExtensions.selectableNodes(area, AreaExtensions.selector(), {
       accumulating: AreaExtensions.accumulateOnCtrl()
    });
 
+   HistoryExtensions.keyboard(history);
+
+   history.addPreset(HistoryPresets.classic.setup());
+
    render.addPreset(Presets.classic.setup());
    render.addPreset(Presets.contextMenu.setup());
+   render.addPreset(Presets.minimap.setup({ size: 200 }));
 
    connection.addPreset(ConnectionPresets.classic.setup());
 
@@ -72,6 +89,8 @@ export async function createEditor(container: HTMLElement) {
    area.use(render);
    area.use(arrange);
    area.use(contextMenu);
+   area.use(minimap);
+   area.use(history);
 
    const animatedApplier = new ArrangeAppliers.TransitionApplier<Schemes, never>({
       duration: 500,
